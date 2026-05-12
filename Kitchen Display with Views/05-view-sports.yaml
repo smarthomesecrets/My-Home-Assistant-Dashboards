@@ -1,0 +1,40 @@
+# Tab Kitchen — View: Sports
+# Live game score cards for your favourite teams using the TeamTracker integration.
+# Background image: replace media-source://YOUR_BACKGROUND_IMAGE with your own uploaded
+# image (Settings > Media), or remove the entire background block for a plain theme background.
+#
+# Adjust sensor entity names to match your TeamTracker sensors
+# (e.g. sensor.blue_jays, sensor.maple_leafs).
+#
+# Required HACS: teamtracker-card
+
+title: Sports
+sections:
+- type: grid
+  cards:
+  - type: custom:teamtracker-card
+    entity: sensor.blue_jays
+  - type: custom:teamtracker-card
+    entity: sensor.maple_leafs
+type: sections
+max_columns: 4
+icon: mdi:hockey-sticks
+cards: []
+theme: Frosted Glass
+background:
+  opacity: 33
+  alignment: center
+  size: cover
+  repeat: repeat
+  attachment: fixed
+  image:
+    media_content_id: media-source://YOUR_BACKGROUND_IMAGE
+    media_content_type: image/jpeg
+    metadata:
+      title: IMG_0265.jpeg
+      thumbnail: /api/image/serve/YOUR_BACKGROUND_IMAGE/256x256
+      media_class: image
+      navigateIds:
+      - {}
+      - media_content_type: app
+        media_content_id: media-source://image_upload

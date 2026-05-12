@@ -1,0 +1,160 @@
+# Tab Kitchen — View: Home
+# Main at-a-glance view: weather forecast, quick light/lock controls,
+# family calendar, and front door package detection camera.
+#
+# Placeholders to replace:
+#   person.YOUR_NAME / person.SPOUSE_NAME  — Settings > People, find your person entity IDs
+#   calendar.YOUR_SPORTS_CALENDAR          — your sports/team calendar entity
+#   calendar.YOUR_PERSONAL_CALENDAR        — your personal calendar entity
+#   calendar.SPOUSE_PERSONAL_CALENDAR      — your spouse's calendar entity
+#   sensor.YOUR_POOL_WATER_TEMPERATURE     — pool water temp sensor (rename yours to remove any address)
+#   sensor.the_tub_current_temperature     — hot tub temp sensor (rename if needed)
+#
+# Required HACS: calendar-card-pro
+
+title: Home
+sections:
+- type: grid
+  cards:
+  - type: heading
+    heading_style: title
+  - show_current: true
+    show_forecast: true
+    type: weather-forecast
+    entity: weather.forecast_home
+    forecast_type: daily
+    forecast_slots: 7
+    grid_options:
+      columns: 12
+      rows: 3
+    secondary_info_attribute: uv_index
+  - show_name: true
+    show_icon: true
+    show_state: true
+    type: glance
+    entities:
+    - entity: light.KITCHEN_LIGHT
+      tap_action:
+        action: toggle
+    - entity: light.KITCHEN_LIGHT2
+      tap_action:
+        action: toggle
+    - entity: switch.KITCHEN_LIGHT3
+      tap_action:
+        action: toggle
+    - entity: light.LIVING_ROOM_LIGHT
+      tap_action:
+        action: toggle
+    - entity: lock.BACK_DOOR
+      tap_action:
+        action: toggle
+    - entity: lock.FRONT_DOOR
+      tap_action:
+        action: toggle
+    - entity: lock.SIDE_DOOR
+      tap_action:
+        action: toggle
+    - entity: lock.GARAGE_DOOR
+      tap_action:
+        action: toggle
+    state_color: true
+    columns: 4
+    theme: Frosted Glass Dark Lite
+- type: grid
+  cards:
+  - type: heading
+    heading_style: title
+  - entities:
+    - entity: calendar.YOUR_SPORTS_CALENDAR
+    - entity: calendar.YOUR_PERSONAL_CALENDAR
+    - entity: calendar.family
+    - entity: calendar.SPOUSE_PERSONAL_CALENDAR
+    days_to_show: 2
+    show_empty_days: true
+    split_multiday_events: true
+    day_spacing: 6px
+    day_separator_width: 1px
+    event_background_opacity: 40
+    show_countdown: true
+    show_progress_bar: true
+    weather:
+      position: none
+      date:
+        show_conditions: false
+        show_high_temp: false
+        show_low_temp: false
+        icon_size: 14px
+        font_size: 12px
+        color: var(--primary-text-color)
+      event:
+        show_conditions: true
+        show_temp: true
+        icon_size: 14px
+        font_size: 12px
+        color: var(--primary-text-color)
+      entity: weather.openweathermap
+    type: custom:calendar-card-pro
+  - show_state: true
+    show_name: true
+    camera_view: auto
+    fit_mode: cover
+    type: picture-entity
+    entity: binary_sensor.front_door_package_detected
+    camera_image: camera.front_door_high_resolution_channel
+    grid_options:
+      columns: 12
+      rows: 4
+type: sections
+max_columns: 4
+dense_section_placement: true
+cards: []
+badges:
+- type: entity
+  show_name: true
+  show_state: true
+  show_icon: true
+  entity: person.YOUR_NAME
+- type: entity
+  show_name: true
+  show_state: true
+  show_icon: true
+  entity: person.SPOUSE_NAME
+- type: entity
+  show_name: true
+  show_state: true
+  show_icon: true
+  entity: sensor.YOURWEATHER_TEMPERATURE
+  name: Out Temp
+- type: entity
+  show_name: true
+  show_state: true
+  show_icon: true
+  entity: sensor.YOURWEATHER_APPARENT_TEMPERATURE
+  name: Feels Like
+- type: entity
+  show_name: true
+  show_state: true
+  show_icon: true
+  entity: sensor.THERMOSTAT_TEMPERATURE
+- type: entity
+  show_name: true
+  show_state: true
+  show_icon: true
+  entity: sensor.YOUR_POOL_WATER_TEMPERATURE
+- type: entity
+  show_name: true
+  show_state: true
+  show_icon: true
+  entity: sensor.YOUR_HOTTUB_TEMPERATURE
+header:
+  layout: center
+  badges_position: top
+  badges_wrap: wrap
+background:
+  opacity: 0
+  alignment: center
+  size: auto
+  repeat: repeat
+  attachment: fixed
+icon: mdi:dip-switch
+theme: Frosted Glass Dark

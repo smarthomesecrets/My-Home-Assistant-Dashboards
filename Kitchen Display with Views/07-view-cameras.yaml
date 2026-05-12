@@ -1,0 +1,104 @@
+# Tab Kitchen — View: Cameras
+# Full-screen live camera panel with dynamic card_mod borders using Jinja2 templates:
+#   - Teal/cyan border  = person detected by that camera
+#   - Yellow border     = the associated light is currently on
+#   - Greyscale image   = inactive  |  Full colour = active detection
+#
+# Layout: pool cam large (top, 52vh), deck + side yard 360 side-by-side (bottom, 38vh each).
+#
+# Adjust camera entity IDs and binary_sensor entity IDs to match your UniFi Protect setup.
+#   camera.pool_cam_high_resolution_channel
+#   camera.deck_high_resolution_channel
+#   camera.ai_360_high_resolution_channel
+#   binary_sensor.pool_cam_person_detected
+#   binary_sensor.deck_person_detected
+#   binary_sensor.side_yard_360_person_detected
+#   light.fence_light / light.deck_pots_root / light.side_fence_light
+#
+# Required HACS: card-mod
+
+background: radial-gradient(ellipse at 20% 50%, rgba(15,20,40,1) 0%, rgba(5,5,10,1) 100%)
+cards:
+- card_mod:
+    style: "ha-card {\n  background: transparent !important;\n  box-shadow: none !important;\n  border: none !important;\n\
+      \  padding: 8px !important;\n  margin: 0 !important;\n  overflow: visible !important;\n}\n"
+  cards:
+  - card_mod:
+      style:
+        ? ''
+        : "ha-card {\n  border-radius: 20px !important;\n  overflow: hidden !important;\n  background: rgba(20,22,30,0.55)\
+          \ !important;\n  backdrop-filter: blur(18px) !important;\n  -webkit-backdrop-filter: blur(18px) !important;\n  margin-bottom:\
+          \ 8px !important;\n  height: 52vh !important;\n  border: 3px solid {% if is_state('binary_sensor.pool_cam_person_detected',\
+          \ 'on') %}rgba(0,210,200,0.9){% elif is_state('light.fence_light', 'on') %}rgba(255,210,0,0.9){% else %}rgba(255,255,255,0.09){%\
+          \ endif %} !important;\n  box-shadow: {% if is_state('binary_sensor.pool_cam_person_detected', 'on') %}0 0 20px\
+          \ rgba(0,210,200,0.45), 0 8px 32px rgba(0,0,0,0.6){% elif is_state('light.fence_light', 'on') %}0 0 20px rgba(255,210,0,0.35),\
+          \ 0 8px 32px rgba(0,0,0,0.6){% else %}0 8px 32px rgba(0,0,0,0.6){% endif %} !important;\n  transition: border 0.5s\
+          \ ease, box-shadow 0.5s ease !important;\n}\nha-card .footer { display: none !important; }\nha-card hui-image {\
+          \ height: 52vh !important; display: block !important; }\n"
+        hui-image$: "img {\n  width: 100% !important;\n  height: 100% !important;\n  object-fit: cover !important;\n  filter:\
+          \ {% if is_state('binary_sensor.pool_cam_person_detected', 'on') %}grayscale(0%) brightness(1){% else %}grayscale(100%)\
+          \ brightness(0.8){% endif %} !important;\n  transition: filter 0.8s ease !important;\n}\n"
+    camera_image: camera.pool_cam_high_resolution_channel
+    camera_view: live
+    entity: camera.pool_cam_high_resolution_channel
+    show_name: false
+    show_state: false
+    tap_action:
+      action: more-info
+    type: picture-entity
+  - card_mod:
+      style: "ha-card {\n  background: transparent !important;\n  border: none !important;\n  box-shadow: none !important;\n\
+        \  padding: 0 !important;\n  margin: 0 !important;\n}\n"
+    cards:
+    - card_mod:
+        style:
+          ? ''
+          : "ha-card {\n  border-radius: 20px !important;\n  overflow: hidden !important;\n  background: rgba(20,22,30,0.55)\
+            \ !important;\n  backdrop-filter: blur(18px) !important;\n  -webkit-backdrop-filter: blur(18px) !important;\n\
+            \  margin-right: 4px !important;\n  height: 38vh !important;\n  border: 3px solid {% if is_state('binary_sensor.deck_person_detected',\
+            \ 'on') %}rgba(0,210,200,0.9){% elif is_state('light.deck_pots_root', 'on') %}rgba(255,210,0,0.9){% else %}rgba(255,255,255,0.09){%\
+            \ endif %} !important;\n  box-shadow: {% if is_state('binary_sensor.deck_person_detected', 'on') %}0 0 20px rgba(0,210,200,0.45),\
+            \ 0 8px 32px rgba(0,0,0,0.6){% elif is_state('light.deck_pots_root', 'on') %}0 0 20px rgba(255,210,0,0.35), 0\
+            \ 8px 32px rgba(0,0,0,0.6){% else %}0 8px 32px rgba(0,0,0,0.6){% endif %} !important;\n  transition: border 0.5s\
+            \ ease, box-shadow 0.5s ease !important;\n}\nha-card .footer { display: none !important; }\nha-card hui-image\
+            \ { height: 38vh !important; display: block !important; }\n"
+          hui-image$: "img {\n  width: 100% !important;\n  height: 100% !important;\n  object-fit: cover !important;\n  filter:\
+            \ {% if is_state('binary_sensor.deck_person_detected', 'on') %}grayscale(0%) brightness(1){% else %}grayscale(100%)\
+            \ brightness(0.8){% endif %} !important;\n  transition: filter 0.8s ease !important;\n}\n"
+      camera_image: camera.deck_high_resolution_channel
+      camera_view: live
+      entity: camera.deck_high_resolution_channel
+      show_name: false
+      show_state: false
+      tap_action:
+        action: more-info
+      type: picture-entity
+    - card_mod:
+        style:
+          ? ''
+          : "ha-card {\n  border-radius: 20px !important;\n  overflow: hidden !important;\n  background: rgba(20,22,30,0.55)\
+            \ !important;\n  backdrop-filter: blur(18px) !important;\n  -webkit-backdrop-filter: blur(18px) !important;\n\
+            \  margin-left: 4px !important;\n  height: 38vh !important;\n  border: 3px solid {% if is_state('binary_sensor.side_yard_360_person_detected',\
+            \ 'on') %}rgba(0,210,200,0.9){% elif is_state('light.side_fence_light', 'on') %}rgba(255,210,0,0.9){% else %}rgba(255,255,255,0.09){%\
+            \ endif %} !important;\n  box-shadow: {% if is_state('binary_sensor.side_yard_360_person_detected', 'on') %}0\
+            \ 0 20px rgba(0,210,200,0.45), 0 8px 32px rgba(0,0,0,0.6){% elif is_state('light.side_fence_light', 'on') %}0\
+            \ 0 20px rgba(255,210,0,0.35), 0 8px 32px rgba(0,0,0,0.6){% else %}0 8px 32px rgba(0,0,0,0.6){% endif %} !important;\n\
+            \  transition: border 0.5s ease, box-shadow 0.5s ease !important;\n}\nha-card .footer { display: none !important;\
+            \ }\nha-card hui-image { height: 38vh !important; display: block !important; }\n"
+          hui-image$: "img {\n  width: 100% !important;\n  height: 100% !important;\n  object-fit: cover !important;\n  filter:\
+            \ {% if is_state('binary_sensor.side_yard_360_person_detected', 'on') %}grayscale(0%) brightness(1){% else %}grayscale(100%)\
+            \ brightness(0.8){% endif %} !important;\n  transition: filter 0.8s ease !important;\n}\n"
+      camera_image: camera.ai_360_high_resolution_channel
+      camera_view: live
+      entity: camera.ai_360_high_resolution_channel
+      show_name: false
+      show_state: false
+      tap_action:
+        action: more-info
+      type: picture-entity
+    type: horizontal-stack
+  type: vertical-stack
+path: cameras
+title: Cameras
+type: panel
+icon: mdi:cctv

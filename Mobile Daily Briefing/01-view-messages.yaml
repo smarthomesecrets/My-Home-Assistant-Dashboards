@@ -1,0 +1,359 @@
+# Daily Messages Dashboard — single view
+# AI-generated daily briefing shown per user via conditional cards.
+# Each user sees their own morning briefing, calendar summary, and energy snapshot.
+# Shared cards (weather, energy pop-up) are visible to everyone.
+#
+# This dashboard depends on two custom template sensors you must build:
+#   sensor.YOUR_DAILY_DIGEST      — your personal digest sensor
+#   sensor.SPOUSE_DAILY_DIGEST    — your spouse's digest sensor
+# These sensors are populated by an automation using a Claude AI conversation agent
+# (or equivalent). The attribute names used here must match your sensor implementation.
+#
+# Placeholders to replace:
+#   YOUR_USER_ID                  — Settings > People > [your user] > User ID
+#   YOUR_SPOUSE_USER_ID           — Settings > People > [spouse user] > User ID
+#   sensor.YOUR_DAILY_DIGEST      — your daily digest template sensor entity
+#   sensor.SPOUSE_DAILY_DIGEST    — spouse daily digest template sensor entity
+#   sensor.YOUR_HOME_ENERGY_KWH   — your energy meter cumulative kWh sensor
+#   sensor.YOUR_TESLA_BATTERY_LEVEL       — Tesla battery level sensor (Settings → Devices → Tesla)
+#   sensor.YOUR_TESLA_WALL_CONNECTOR_STATUS — Tesla wall connector status sensor
+#   YOUR_WORK_EVENTS / YOUR_PERSONAL_EVENTS / YOUR_SPORTS_EVENTS — sensor attribute names
+#   SPOUSE_EVENTS / YOUR_SPOUSE_SPARK_ATTR / YOUR_SPARK_ATTR    — sensor attribute names
+#   YOUR_NAME / SPOUSE_NAME (display text in markdown headings)
+#
+# Required HACS:
+#   bubble-card
+#   html-template-card
+#   nimbus-weather-card
+#   button-card
+#
+# Built-in helpers required (create under Settings > Helpers):
+#   input_number.energy_meter_midnight_baseline
+#   input_number.tou_rate_off_peak
+#   input_number.tou_rate_mid_peak
+#   input_number.tou_rate_on_peak
+#   input_number.yesterday_home_energy_kwh
+#   input_number.yesterday_home_energy_cost
+#   input_number.last_tesla_charge_kwh
+#   input_number.last_tesla_charge_cost
+
+badges: []
+cards:
+- type: vertical-stack
+  cards:
+  - type: custom:bubble-card
+    card_type: pop-up
+    hash: '#energy-detail'
+    name: Home Energy
+    icon: mdi:lightning-bolt
+  - type: markdown
+    content: '## ⚡ Home Energy
+
+      {% set baseline = states(''input_number.energy_meter_midnight_baseline'') | float(0) %}
+
+      {% set live = states(''sensor.YOUR_HOME_ENERGY_KWH'') | float(0) %}
+
+      {% set today_kwh = [live - baseline, 0] | max | round(1) %}
+
+      {% set is_weekend = now().weekday() >= 5 %}
+
+      {% set off = states(''input_number.tou_rate_off_peak'') | float(0.098) %}
+
+      {% set mid = states(''input_number.tou_rate_mid_peak'') | float(0.157) %}
+
+      {% set on = states(''input_number.tou_rate_on_peak'') | float(0.203) %}
+
+      {% set rate = off if is_weekend else (off * 0.35 + mid * 0.40 + on * 0.25) %}
+
+      {% set today_cost = (today_kwh | float * rate * (1 - 0.235) * 1.13) | round(2) %}
+
+      {% set yest_kwh = states(''input_number.yesterday_home_energy_kwh'') | float(0) | round(1) %}
+
+      {% set yest_cost = states(''input_number.yesterday_home_energy_cost'') | float(0) | round(2) %}
+
+      {% set tesla_pct = states(''sensor.YOUR_TESLA_BATTERY_LEVEL'') | int(0) %}
+
+      {% set tesla_charge_kwh = states(''input_number.last_tesla_charge_kwh'') | float(0) | round(2) %}
+
+      {% set tesla_charge_cost = states(''input_number.last_tesla_charge_cost'') | float(0) | round(2) %}
+
+      {% set tesla_status = states(''sensor.YOUR_TESLA_WALL_CONNECTOR_STATUS'') %}
+
+      **Today so far:** {{ today_kwh }} kWh · est. **${{ today_cost }}**
+
+      **Yesterday:** {{ yest_kwh }} kWh · est. **${{ yest_cost }}**
+
+      <small>*TOU estimate: off-peak {{ (off * 100) | round(1) }}¢ / mid {{ (mid * 100) | round(1) }}¢ / on {{ (on * 100)
+      | round(1) }}¢ · after OER & HST*</small>
+
+
+      ---
+
+      🔋 **Tesla:** {{ tesla_pct }}% · {{ tesla_status | title }}
+
+      **Last charge:** {{ tesla_charge_kwh }} kWh · est. **${{ tesla_charge_cost }}**
+
+      <small>*Charged at off-peak rate · after OER & HST*</small>'
+- type: vertical-stack
+  cards:
+  - type: custom:bubble-card
+    card_type: pop-up
+    hash: '#weather-forecast'
+    name: Hourly Forecast
+    icon: mdi:weather-partly-cloudy
+  - type: custom:html-template-card
+    ignore_line_breaks: true
+    entities:
+    - sensor.daily_weather
+    content: '{% set raw = state_attr(''sensor.daily_weather'', ''hourly_forecast'') %}{% if raw and raw | length > 0 %}{%
+      set hours = raw.split('',,'') %}{% set ns = namespace(data=[]) %}{% for h in hours %}{% set parts = h.split(''|'') %}{%
+      if parts | length == 5 %}{% set dt = as_datetime(parts[0]).astimezone() %}{% if dt >= now().replace(minute=0, second=0,
+      microsecond=0) and dt <= now().replace(minute=0, second=0, microsecond=0) + timedelta(hours=24) %}{% set ns.data = ns.data
+      + [{''t'': dt.strftime(''%-I%p''), ''cond'': parts[1], ''temp'': parts[2] | float(0) | round(0) | int, ''mm'': parts[3]
+      | float(0), ''pct'': parts[4] | int(0)}] %}{% endif %}{% endif %}{% endfor %}{% set cond_emoji = {''sunny'': ''☀️'',
+      ''clear-night'': ''🌙'', ''partlycloudy'': ''⛅'', ''cloudy'': ''☁️'', ''fog'': ''🌫️'', ''rainy'': ''🌧️'', ''pouring'':
+      ''⛈️'', ''snowy'': ''❄️'', ''snowy-rainy'': ''🌨️'', ''windy'': ''🌬️'', ''windy-variant'': ''🌬️'', ''lightning'': ''⚡'',
+      ''lightning-rainy'': ''⛈️'', ''hail'': ''🌨️'', ''exceptional'': ''⚠️''} %}<style>.hfc{width:100%;font-family:-apple-system,sans-serif;padding:4px
+      0}.hft{font-size:13px;font-weight:500;margin-bottom:10px;color:var(--primary-text-color)}.hfs{display:flex;overflow-x:auto;gap:0px;-webkit-overflow-scrolling:touch;scrollbar-width:none}.hfs::-webkit-scrollbar{display:none}.hfc-col{flex:0
+      0 20%;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 4px}.hfc-time{font-size:11px;color:#888;white-space:nowrap}.hfc-emoji{font-size:20px;line-height:1}.hfc-pct{font-size:12px;font-weight:600;color:#5aaff5;height:14px}.hfc-temp{font-size:14px;font-weight:500;color:var(--primary-text-color)}</style><div
+      class="hfc"><div class="hft">🕐 Hourly Forecast</div><div class="hfs">{% for h in ns.data %}<div class="hfc-col"><div
+      class="hfc-time">{{ h.t }}</div><div class="hfc-emoji">{{ cond_emoji.get(h.cond, ''🌡️'') }}</div><div class="hfc-pct">{%
+      if h.pct > 0 %}{{ h.pct }}%{% endif %}</div><div class="hfc-temp">{{ h.temp }}°</div></div>{% endfor %}</div></div>{%
+      else %}<div style="color:#888;font-size:13px;padding:8px 0;">Hourly data populates at 5am</div>{% endif %}'
+  - type: custom:html-template-card
+    ignore_line_breaks: true
+    entities:
+    - sensor.daily_weather
+    content: '{% set raw = state_attr(''sensor.daily_weather'', ''daily_forecast'') %}{% if raw and raw | length > 0 %}{%
+      set days = raw.split('',,'') %}{% set ns = namespace(rows=[]) %}{% for d in days %}{% set parts = d.split(''|'') %}{%
+      if parts | length == 5 %}{% set ns.rows = ns.rows + [{''dt'': as_datetime(parts[0]).astimezone(), ''cond'': parts[1],
+      ''high'': parts[2] | float(0) | round(0) | int, ''low'': parts[3] | float(0) | round(0) | int, ''pct'': parts[4] | int(0)}]
+      %}{% endif %}{% endfor %}{% set all_highs = ns.rows | map(attribute=''high'') | list %}{% set all_lows = ns.rows | map(attribute=''low'')
+      | list %}{% set global_min = all_lows | min %}{% set global_max = all_highs | max %}{% set global_range = [global_max
+      - global_min, 1] | max %}<style>.dfc{width:100%;font-family:-apple-system,sans-serif;padding:4px 0}.dft{font-size:13px;font-weight:500;margin-bottom:4px;color:var(--primary-text-color)}.dfr{display:flex;align-items:center;gap:6px;padding:9px
+      0;border-bottom:1px solid rgba(128,128,128,0.15)}.dfr:last-child{border-bottom:none}.dfd{font-size:14px;color:var(--primary-text-color);width:36px;flex-shrink:0}.dfi{font-size:18px;width:24px;text-align:center;flex-shrink:0}.dfp{font-size:11px;color:#5aaff5;width:30px;text-align:center;flex-shrink:0}.dfl{font-size:13px;color:var(--secondary-text-color);width:26px;text-align:right;flex-shrink:0}.dfbar{flex:1;height:4px;border-radius:2px;background:rgba(128,128,128,0.2);position:relative;min-width:40px}.dfbarfill{position:absolute;height:4px;border-radius:2px;top:0}.dfh{font-size:13px;color:var(--primary-text-color);width:26px;text-align:left;flex-shrink:0}</style>{%
+      set cond_emoji = {''sunny'': ''☀️'', ''clear-night'': ''🌙'', ''partlycloudy'': ''⛅'', ''cloudy'': ''☁️'', ''fog'': ''🌫️'',
+      ''rainy'': ''🌧️'', ''pouring'': ''⛈️'', ''snowy'': ''❄️'', ''snowy-rainy'': ''🌨️'', ''windy'': ''🌬️'', ''windy-variant'':
+      ''🌬️'', ''lightning'': ''⚡'', ''lightning-rainy'': ''⛈️'', ''hail'': ''🌨️'', ''exceptional'': ''⚠️''} %}<div class="dfc"><div
+      class="dft">📅 8-Day Forecast</div>{% for row in ns.rows %}{% set day = ''Today'' if loop.index0 == 0 else row.dt.strftime(''%a'')
+      %}{% set emoji = cond_emoji.get(row.cond, ''🌡️'') %}{% set low_pct = ((row.low - global_min) / global_range * 100) |
+      round(1) %}{% set high_pct = ((row.high - global_min) / global_range * 100) | round(1) %}{% set bar_left = low_pct %}{%
+      set bar_width = high_pct - low_pct %}{% set temp_range = global_max - global_min %}{% set warmth = ((row.high - global_min)
+      / global_range) %}{% if warmth > 0.66 %}{% set bar_color = ''linear-gradient(to right,#f5a623,#e8533a)'' %}{% elif warmth
+      > 0.33 %}{% set bar_color = ''linear-gradient(to right,#5aaff5,#f5a623)'' %}{% else %}{% set bar_color = ''linear-gradient(to
+      right,#5de0e0,#5aaff5)'' %}{% endif %}<div class="dfr"><div class="dfd">{{ day }}</div><div class="dfi">{{ emoji }}</div><div
+      class="dfp">{% if row.pct > 0 %}{{ row.pct }}%{% endif %}</div><div class="dfl">{{ row.low }}°</div><div class="dfbar"><div
+      class="dfbarfill" style="left:{{ bar_left }}%;width:{{ bar_width }}%;background:{{ bar_color }};"></div></div><div class="dfh">{{
+      row.high }}°</div></div>{% endfor %}</div>{% else %}<div style="color:#888;font-size:13px;padding:8px 0;">Forecast data
+      populates at 5am</div>{% endif %}'
+- type: conditional
+  conditions:
+  - condition: user
+    users:
+    - YOUR_SPOUSE_USER_ID
+  card:
+    type: markdown
+    content: '## 📬 SPOUSE_NAME''s Morning Briefing
+
+      *{{ state_attr(''sensor.SPOUSE_DAILY_DIGEST'', ''generated_at'') or ''Not yet generated'' }}*'
+- type: conditional
+  conditions:
+  - condition: user
+    users:
+    - YOUR_USER_ID
+  card:
+    type: markdown
+    content: '## 📬 YOUR_NAME''s Morning Briefing
+
+      *{{ state_attr(''sensor.YOUR_DAILY_DIGEST'', ''generated_at'') or ''Not yet generated'' }}*'
+- type: custom:nimbus-weather-card
+  entity: weather.openweathermap
+  sun_entity: sun.sun
+  language: en
+  tap_action:
+    action: navigate
+    navigation_path: '#weather-forecast'
+- type: conditional
+  conditions:
+  - condition: user
+    users:
+    - YOUR_SPOUSE_USER_ID
+  card:
+    type: vertical-stack
+    cards:
+    - type: markdown
+      content: '## 📅 SPOUSE_NAME''s Day
+
+        {% set SPOUSE_NAME_raw = state_attr(''sensor.SPOUSE_DAILY_DIGEST'', ''SPOUSE_EVENTS'') %}
+
+        {% set ns = namespace(events=[]) %}
+
+        {% if SPOUSE_NAME_raw %}{% for e in SPOUSE_NAME_raw.split('',,'') %}{% set parts = e.split(''|'') %}{% if parts | length == 2
+        %}{% set t = parts[0][11:16] if parts[0] | length > 10 else ''All day'' %}{% set ns.events = ns.events + [{''t'':
+        t, ''name'': parts[1]}] %}{% endif %}{% endfor %}{% endif %}
+
+        {% if ns.events | length > 0 %}{% for e in ns.events | sort(attribute=''t'') %}
+
+        - 🗓️ **{{ e.t }}** {{ e.name }}{% endfor %}
+
+        {% else %}
+
+        *No personal events today*
+
+        {% endif %}'
+    - type: markdown
+      content: '## 👨‍👩‍👧 Family
+
+        {% set fam_raw = state_attr(''sensor.SPOUSE_DAILY_DIGEST'', ''family_events'') %}
+
+        {% set personal_raw = state_attr(''sensor.SPOUSE_DAILY_DIGEST'', ''YOUR_PERSONAL_EVENTS'') %}
+
+        {% set sports_raw = state_attr(''sensor.SPOUSE_DAILY_DIGEST'', ''YOUR_SPORTS_EVENTS'') %}
+
+        {% set ns = namespace(fam=[], YOUR_NAME_day=[], YOUR_NAME_evening=[], sports=[]) %}
+
+        {% if fam_raw %}{% for e in fam_raw.split('',,'') %}{% set parts = e.split(''|'') %}{% if parts | length == 2 %}{%
+        set t = parts[0][11:16] if parts[0] | length > 10 else ''All day'' %}{% set ns.fam = ns.fam + [{''t'': t, ''name'':
+        parts[1]}] %}{% endif %}{% endfor %}{% endif %}
+
+        {% if personal_raw %}{% for e in personal_raw.split('',,'') %}{% set parts = e.split(''|'') %}{% if parts | length
+        == 2 %}{% set t = parts[0][11:16] if parts[0] | length > 10 else ''All day'' %}{% if t != ''All day'' and t[:2] |
+        int >= 17 %}{% set ns.YOUR_NAME_evening = ns.YOUR_NAME_evening + [{''t'': t, ''name'': parts[1]}] %}{% else %}{% set ns.YOUR_NAME_day
+        = ns.YOUR_NAME_day + [{''t'': t, ''name'': parts[1]}] %}{% endif %}{% endif %}{% endfor %}{% endif %}
+
+        {% if sports_raw %}{% for e in sports_raw.split('',,'') %}{% set parts = e.split(''|'') %}{% if parts | length ==
+        2 %}{% set t = parts[0][11:16] if parts[0] | length > 10 else ''All day'' %}{% if t != ''All day'' and t[:2] | int
+        >= 17 %}{% set ns.YOUR_NAME_evening = ns.YOUR_NAME_evening + [{''t'': t, ''name'': parts[1]}] %}{% else %}{% set ns.sports =
+        ns.sports + [{''t'': t, ''name'': parts[1]}] %}{% endif %}{% endif %}{% endfor %}{% endif %}
+
+        {% if ns.fam | length == 0 and ns.YOUR_NAME_day | length == 0 and ns.YOUR_NAME_evening | length == 0 and ns.sports | length
+        == 0 %}
+
+        *Nothing on the family calendar today*
+
+        {% else %}
+
+        {% for e in ns.fam %}- 👨‍👩‍👧 **{{ e.t }}** {{ e.name }}
+
+        {% endfor %}{% for e in ns.YOUR_NAME_day %}- 🗓️ YOUR_NAME: **{{ e.t }}** {{ e.name }}
+
+        {% endfor %}{% for e in ns.sports %}- 🏆 YOUR_NAME: **{{ e.t }}** {{ e.name }}
+
+        {% endfor %}{% for e in ns.YOUR_NAME_evening %}- ⚠️ YOUR_NAME has **{{ e.name }}** at {{ e.t }} — you may need to handle the
+        kids
+
+        {% endfor %}{% endif %}'
+    - type: markdown
+      content: '## ✨ Daily Spark & 🌟 Daily Extra
+
+        {{ state_attr(''sensor.SPOUSE_DAILY_DIGEST'', ''YOUR_SPOUSE_SPARK_ATTR'') or ''*Not yet generated*'' }}'
+- type: conditional
+  conditions:
+  - condition: user
+    users:
+    - YOUR_USER_ID
+  card:
+    type: vertical-stack
+    cards:
+    - type: markdown
+      content: '## 📅 YOUR_NAME''s Day
+
+        {% set work_raw = state_attr(''sensor.YOUR_DAILY_DIGEST'', ''YOUR_WORK_EVENTS'') %}
+
+        {% set personal_raw = state_attr(''sensor.YOUR_DAILY_DIGEST'', ''YOUR_PERSONAL_EVENTS'') %}
+
+        {% set sports_raw = state_attr(''sensor.YOUR_DAILY_DIGEST'', ''YOUR_SPORTS_EVENTS'') %}
+
+        {% set ns = namespace(events=[]) %}
+
+        {% if work_raw %}{% for e in work_raw.split('',,'') %}{% set parts = e.split(''|'') %}{% if parts | length == 2 %}{%
+        set t = parts[0][11:16] if parts[0] | length > 10 else ''All day'' %}{% set ns.events = ns.events + [{''t'': t, ''name'':
+        parts[1], ''icon'': ''💼''}] %}{% endif %}{% endfor %}{% endif %}
+
+        {% if personal_raw %}{% for e in personal_raw.split('',,'') %}{% set parts = e.split(''|'') %}{% if parts | length
+        == 2 %}{% set t = parts[0][11:16] if parts[0] | length > 10 else ''All day'' %}{% set ns.events = ns.events + [{''t'':
+        t, ''name'': parts[1], ''icon'': ''🗓️''}] %}{% endif %}{% endfor %}{% endif %}
+
+        {% if sports_raw %}{% for e in sports_raw.split('',,'') %}{% set parts = e.split(''|'') %}{% if parts | length ==
+        2 %}{% set t = parts[0][11:16] if parts[0] | length > 10 else ''All day'' %}{% set ns.events = ns.events + [{''t'':
+        t, ''name'': parts[1], ''icon'': ''🏆''}] %}{% endif %}{% endfor %}{% endif %}
+
+        {% if ns.events | length > 0 %}{% for e in ns.events | sort(attribute=''t'') %}
+
+        - {{ e.icon }} **{{ e.t }}** {{ e.name }}{% endfor %}
+
+        {% else %}
+
+        *No events today*
+
+        {% endif %}'
+    - type: markdown
+      content: '## 👨‍👩‍👧 Family
+
+        {% set fam_raw = state_attr(''sensor.YOUR_DAILY_DIGEST'', ''family_events'') %}
+
+        {% set SPOUSE_NAME_raw = state_attr(''sensor.YOUR_DAILY_DIGEST'', ''SPOUSE_EVENTS'') %}
+
+        {% set ns = namespace(fam=[], SPOUSE_NAME_evening=[], SPOUSE_NAME_day=[]) %}
+
+        {% if fam_raw %}{% for e in fam_raw.split('',,'') %}{% set parts = e.split(''|'') %}{% if parts | length == 2 %}{%
+        set t = parts[0][11:16] if parts[0] | length > 10 else ''All day'' %}{% set ns.fam = ns.fam + [{''t'': t, ''name'':
+        parts[1]}] %}{% endif %}{% endfor %}{% endif %}
+
+        {% if SPOUSE_NAME_raw %}{% for e in SPOUSE_NAME_raw.split('',,'') %}{% set parts = e.split(''|'') %}{% if parts | length == 2
+        %}{% set t = parts[0][11:16] if parts[0] | length > 10 else ''All day'' %}{% if t != ''All day'' and t[:2] | int >=
+        17 %}{% set ns.SPOUSE_NAME_evening = ns.SPOUSE_NAME_evening + [{''t'': t, ''name'': parts[1]}] %}{% else %}{% set ns.SPOUSE_NAME_day
+        = ns.SPOUSE_NAME_day + [{''t'': t, ''name'': parts[1]}] %}{% endif %}{% endif %}{% endfor %}{% endif %}
+
+        {% if ns.fam | length == 0 and ns.SPOUSE_NAME_evening | length == 0 and ns.SPOUSE_NAME_day | length == 0 %}
+
+        *Nothing on the family calendar today*
+
+        {% else %}
+
+        {% for e in ns.fam %}- 👨‍👩‍👧 **{{ e.t }}** {{ e.name }}
+
+        {% endfor %}{% for e in ns.SPOUSE_NAME_day %}- 👩 **{{ e.t }}** {{ e.name }}
+
+        {% endfor %}{% for e in ns.SPOUSE_NAME_evening %}- ⚠️ SPOUSE_NAME has **{{ e.name }}** at {{ e.t }} — plan accordingly
+
+        {% endfor %}{% endif %}'
+    - type: markdown
+      content: '## ⚡ Home Energy
+
+        {% set baseline = states(''input_number.energy_meter_midnight_baseline'') | float(0) %}
+
+        {% set live = states(''sensor.YOUR_HOME_ENERGY_KWH'') | float(0) %}
+
+        {% set today_kwh = [live - baseline, 0] | max | round(1) %}
+
+        {% set yest_kwh = states(''input_number.yesterday_home_energy_kwh'') | float(0) | round(1) %}
+
+        {% set tesla_pct = states(''sensor.YOUR_TESLA_BATTERY_LEVEL'') | int(0) %}
+
+        {% if baseline == 0 %}Today **calculating…**{% else %}Today **{{ today_kwh }} kWh**{% endif %} · Yesterday **{{ yest_kwh
+        }} kWh** · 🔋 Tesla **{{ tesla_pct }}%**'
+    - type: custom:button-card
+      name: Energy Details ›
+      icon: mdi:lightning-bolt
+      tap_action:
+        action: navigate
+        navigation_path: '#energy-detail'
+      styles:
+        card:
+        - height: 36px
+        - padding: 0 12px
+        - margin-top: -8px
+        name:
+        - font-size: 13px
+        - color: var(--primary-color)
+        icon:
+        - width: 16px
+        - color: var(--primary-color)
+    - type: markdown
+      content: '## ✨ Daily Spark
+
+        {{ state_attr(''sensor.YOUR_DAILY_DIGEST'', ''YOUR_SPARK_ATTR'') or ''*Spark not yet generated*'' }}'
+icon: mdi:email
+path: daily-messages
+title: Messages

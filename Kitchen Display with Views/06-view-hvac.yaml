@@ -1,0 +1,67 @@
+# Tab Kitchen — View: HVAC
+# Thermostat controls for hallway climate, Dyson fan, and great room fireplace.
+# Badges show hallway temp, Dyson temp, and outdoor temperature at a glance.
+#
+# Placeholders to replace:
+#   climate.YOUR_THERMOSTAT   — your Thermostat (Settings > Devices > find your Device)
+#   sensor.YOUR_FIREPLACE — your Dyson temperature sensor entity ID
+#   climate.YOUR_DYSON_CLIMATE    — your Dyson climate entity ID
+#   sensor.YOUR_DYSON_TEMPERATURE — your Dyson temperature sensor entity ID
+#   sensor.YOUR_WEATHER_TEMPERATURE — your Dyson temperature sensor entity ID
+#
+# Required HACS: none (uses built-in thermostat and tile cards)
+
+type: sections
+max_columns: 4
+title: HVAC
+path: hvac
+icon: mdi:fireplace
+sections:
+- type: grid
+  cards:
+  - type: thermostat
+    entity: climate.YOUR_THERMOSTAT
+    features:
+    - type: climate-hvac-modes
+    - type: climate-fan-modes
+      style: dropdown
+  - type: tile
+    entity: switch.YOUR_FIREPLACE
+    color: deep-orange
+    show_entity_picture: true
+    vertical: false
+    tap_action:
+      action: toggle
+    features_position: bottom
+    grid_options:
+      columns: 12
+      rows: 1
+- type: grid
+  cards:
+  - type: thermostat
+    entity: climate.YOUR_DYSON_CLIMATE
+    features:
+    - type: climate-hvac-modes
+    show_current_as_primary: false
+    name:
+      type: device
+badges:
+- type: entity
+  show_name: true
+  show_state: true
+  show_icon: true
+  entity: sensor.YOUR_THERMOSTAT_temperature
+- type: entity
+  show_name: true
+  show_state: true
+  show_icon: true
+  entity: sensor.YOUR_DYSON_TEMPERATURE
+  name: Dyson Fan
+- type: entity
+  show_name: true
+  show_state: true
+  show_icon: true
+  entity: sensor.YOUR_WEATHER_TEMPERATURE
+  name: Out Temp
+theme: Frosted Glass
+cards: []

@@ -1,0 +1,16 @@
+# Tab Kitchen — View: Photos
+# Displays a full-screen iframe to your Synology NAS (e.g. Synology Photos or another web app).
+#
+# Placeholders to replace:
+#   YOUR_IMMICH_FRAME_URL — your Immich-Frame URL (e.g. https://your-nas:8083)
+#
+# Required HACS: none
+
+type: panel
+path: photos
+title: Photos
+icon: mdi:camera-burst
+cards:
+- type: iframe
+  url: YOUR_IMMICH_FRAME_URL
+  aspect_ratio: 100%

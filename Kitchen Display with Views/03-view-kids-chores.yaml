@@ -1,0 +1,107 @@
+# Tab Kitchen — View: Kids Chores
+# Time-of-day chore task cards for two children using the Taskmate custom integration.
+# Cards auto-show/hide based on time of day (morning / afternoon / evening windows).
+#
+# Placeholders to replace:
+#   YOUR_CHILD_1_ID         — child ID from your Taskmate config (Settings > Taskmate)
+#   YOUR_CHILD_2_ID         — second child's ID
+#   YOUR_CHILD_1_REWARD_ID  — reward goal ID for child 1
+#   YOUR_CHILD_2_REWARD_ID  — reward goal ID for child 2
+#   header_color values     — per-child colour customisation, adjust freely
+#
+# Required HACS: taskmate (custom integration + cards)
+
+type: sections
+max_columns: 4
+title: Kids Chores
+path: kids-chores
+icon: mdi:human-child
+theme: Frosted Glass Dark Lite
+sections:
+- type: grid
+  cards:
+  - type: heading
+    heading_style: title
+  - type: custom:taskmate-child-card
+    entity: sensor.taskmate_overview
+    child_id: YOUR_CHILD_1_ID
+    time_category: morning
+    elapsed_time_mode: hide
+    recurrence_done_mode: hide
+    visibility:
+    - condition: time
+      after: 06:00:00
+      before: '12:00:00'
+  - type: custom:taskmate-child-card
+    entity: sensor.taskmate_overview
+    child_id: YOUR_CHILD_1_ID
+    time_category: afternoon
+    elapsed_time_mode: hide
+    recurrence_done_mode: hide
+    visibility:
+    - condition: time
+      after: '12:00:00'
+      before: '17:15:00'
+  - type: custom:taskmate-child-card
+    entity: sensor.taskmate_overview
+    child_id: YOUR_CHILD_1_ID
+    time_category: evening
+    elapsed_time_mode: hide
+    recurrence_done_mode: hide
+    visibility:
+    - condition: time
+      after: '17:15:00'
+      before: '22:00:00'
+- type: grid
+  cards:
+  - type: heading
+    heading_style: title
+  - type: custom:taskmate-reward-progress-card
+    entity: sensor.taskmate_overview
+    title: Reward Goal
+    reward_id: YOUR_CHILD_1_REWARD_ID
+    header_color: '#ffab01'
+    child_id: YOUR_CHILD_1_ID
+  - type: custom:taskmate-reward-progress-card
+    entity: sensor.taskmate_overview
+    title: Reward Goal
+    header_color: '#ffab01'
+    reward_id: YOUR_CHILD_2_REWARD_ID
+    child_id: YOUR_CHILD_2_ID
+- type: grid
+  cards:
+  - type: heading
+    heading_style: title
+  - type: custom:taskmate-child-card
+    entity: sensor.taskmate_overview
+    child_id: YOUR_CHILD_2_ID
+    time_category: morning
+    recurrence_done_mode: hide
+    elapsed_time_mode: hide
+    header_color: '#76bb40'
+    visibility:
+    - condition: time
+      after: 06:00:00
+      before: '12:00:00'
+  - type: custom:taskmate-child-card
+    entity: sensor.taskmate_overview
+    child_id: YOUR_CHILD_2_ID
+    time_category: afternoon
+    recurrence_done_mode: hide
+    elapsed_time_mode: hide
+    header_color: '#76bb40'
+    visibility:
+    - condition: time
+      after: '12:00:00'
+      before: '17:15:00'
+  - type: custom:taskmate-child-card
+    entity: sensor.taskmate_overview
+    child_id: YOUR_CHILD_2_ID
+    time_category: evening
+    recurrence_done_mode: hide
+    elapsed_time_mode: hide
+    header_color: '#76bb40'
+    visibility:
+    - condition: time
+      after: '17:15:00'
+      before: '22:00:00'

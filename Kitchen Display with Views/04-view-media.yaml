@@ -1,0 +1,53 @@
+# Tab Kitchen — View: Media
+# Media controls for great room and outdoor zones.
+# Covers Sonos speakers, Apple TV, deck TV, and pool patio speaker.
+# Includes quick-launch buttons for YouTube (opens in browser) and the Sonos app (deep link).
+#
+# Adjust entity IDs to match your media_player entities.
+#
+# Required HACS: none (uses built-in media-control card)
+
+type: sections
+max_columns: 4
+title: Media
+path: media
+icon: mdi:multimedia
+sections:
+- type: grid
+  cards:
+  - type: heading
+    icon: mdi:television
+    heading: Great Room
+    heading_style: title
+  - type: media-control
+    entity: media_player.great_room_sonos
+  - type: media-control
+    entity: media_player.great_room_apple_tv_2
+  - type: button
+    name: YouTube
+    icon: mdi:youtube
+    tap_action:
+      action: url
+      url_path: https://www.youtube.com
+    style: "ha-card {\n  color: red;\n}\n"
+  - type: button
+    name: Sonos
+    icon: mdi:music-circle
+    tap_action:
+      action: url
+      url_path: sonos://
+    style: "ha-card {\n  color: brown;\n}\n"
+- type: grid
+  cards:
+  - type: heading
+    heading_style: title
+    heading: Outside
+    icon: mdi:palm-tree
+  - type: media-control
+    entity: media_player.deck_tv_2
+  - type: media-control
+    entity: media_player.deck_sonos
+  - type: media-control
+    entity: media_player.pool_patio
+theme: Frosted Glass Dark
+cards: []
