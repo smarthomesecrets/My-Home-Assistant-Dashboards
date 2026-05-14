@@ -4,6 +4,9 @@ A collection of my personal Home Assistant dashboard YAML files, free to downloa
 
 Each dashboard lives in its own folder. Open the folder for the dashboard you want and read the README inside before doing anything else — it lists the required HACS plugins, every placeholder you need to replace, and instructions for adding or removing entities.
 
+[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-blue.png)](https://www.buymeacoffee.com/smarthomesecrets)
+
+
 ---
 
 ## Dashboards
@@ -27,3 +30,4 @@ Each dashboard lives in its own folder. Open the folder for the dashboard you wa
 ## More at Smart Home Secrets
 
 Full write-ups, automation YAML, and build guides at [SmartHomeSecrets.ca](https://smarthomesecrets.ca).
+
